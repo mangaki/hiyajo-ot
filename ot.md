@@ -22,7 +22,7 @@ bibliography: true
 
 Précisément, on se donne une base de données représentée par une matrice $M \in \M_{n, m}(\{0, 1\})$ dont le terme général $(m_{i,j})$ indique si l'utilisateur $i$ a aimé l'entrée $j$.
 
-À partir de $M$, on veut apprendre un classificateur, i.e. $f : [[1, n]] \times [[1, m]] \to \{ 0, 1 \}$, capable de prédire $\widehat{m_{i,j}} = f(i, j)$ si celui-ci n'est pas connu, avec, ou non, $p_{i,j} = \PR(m_{i,j} = \widehat{m_{i,j}} \mid \theta) \in [0, 1]$ où $\theta$ est une forme d'information partielle sur $M$.
+À partir de $M$, on veut apprendre un classifieur, i.e. $f : [[1, n]] \times [[1, m]] \to \{ 0, 1 \}$, capable de prédire $\widehat{m_{i,j}} = f(i, j)$ si celui-ci n'est pas connu, avec la probabilité, ou non, $p_{i,j} = \PR(m_{i,j} = \widehat{m_{i,j}} \mid \theta) \in [0, 1]$ où $\theta$ est une forme d'information partielle sur $M$.
 
 On notera aussi $r_u \in \R^m$ la distribution de l'utilisateur $u \in [[1, n]]$ sur les entrées.
 
@@ -174,7 +174,7 @@ Donc, la matrice de coût représente la similarité visuelle entre deux couvert
 
 \begin{figure}[!ht]
         \centering
-        \includegraphics[scale=0.5]{assets/cg_similarity.png}
+        \includegraphics[scale=0.4]{assets/cg_similarity.png}
         \caption{Distance entre les deux couvertures où le coût de déplacement est minimal sur toutes les œuvres du jeu de données}
 \end{figure}
 \end{samepage}
@@ -250,5 +250,15 @@ W-KNN & \textbf{0.625}\\ \bottomrule
 Le second objectif du TIPE **a été atteint**, on constate que W-KNN a une meilleure performance que KNN de façon stable et reproductible.
 
 # Prolongements envisagables
+
+Après avoir atteint tous les objectifs fixés par le TIPE.
+Nous n'avons pas discuté des différences entre les temps d'entraînement et de prédiction de KNN et W-KNN.
+En l'état, W-KNN est 100 fois plus lent à entraîner que KNN malgré l'algorithme de Sinkhorn, cela s'explique que les expériences n'ont pas exploité le caractère hautement parallélisable de cet algorithme afin de faire diminuer les temps de calculs.
+
+Cependant, une alternative est envisageable par [@altschuler2017near], un algorithme quasi-linéaire de calcul des distances approximatifs de Wasserstein est possible, et mis en place sous le nom de **Greenkhorn** dans la librairie POT, cependant il est très sensible aux erreurs numériques et n'est pas conçu pour la parallélisation automatique. Durant les essais préliminaires, aucune renormalisation n'a été fructueux.
+
+De plus, l'algorithme de Sinkhorn possède une version stabilisée qui fonctionne selon le principe décrit dans [@schmitzer2019stabilized] mais Greenkhorn n'en possède aucune, il serait intéressant de contribuer à POT afin d'ajouter le support pour un tel schéma de calcul numérique et de résoudre le problème décrit ici: <https://github.com/rflamary/POT/issues/54> par la même occasion.
+
+Enfin, une meilleure étude des matrices de confusion, des voisins de W-KNN en opposition à ceux de KNN permettraient de mieux comprendre les erreurs de W-KNN serait pertinent, ceci conjoint à une véritable recherche d'hyper-paramètre pour le terme de régularisation entropique et le seuil de discrimination rendrait le système de recommandation plus fiable.
 
 # Réferences bibliographiques
