@@ -102,3 +102,9 @@ venv.bak/
 
 # mypy
 .mypy_cache/
+
+data/paths-*
+data/embeddings-*
+posters/
+pandoc.out
+_minted-input/
