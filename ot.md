@@ -18,7 +18,7 @@ bibliography: true
 
 ## Recommandation d'entrées
 
-À partir d'un ensemble de préférences exprimés par des utilisateurs, on voudrait une méthode de prédiction des futures préférences des utilisateurs. On s'attachera à résoudre ce problème grâce à l'apprentissage automatique supervisée.
+À partir d'un ensemble de préférences exprimées par des utilisateurs, on voudrait une méthode de prédiction des futures préférences des utilisateurs. On s'attachera à résoudre ce problème grâce à l'apprentissage automatique supervisé.
 
 Précisément, on se donne une base de données représentée par une matrice $M \in \M_{n, m}(\{0, 1\})$ dont le terme général $(m_{i,j})$ indique si l'utilisateur $i$ a aimé l'entrée $j$.
 
@@ -31,7 +31,7 @@ On notera aussi $r_u \in \R^m$ la distribution de l'utilisateur $u \in [[1, n]]$
 Le modèle sera testé sur le jeu de données fournis par le site [@mangaki] qui comporte:
 
 - 2289 utilisateurs ;
-- 12479 œuvres issus de l'animation japonaise (animes, mangas) ;
+- 12479 œuvres issus de l'animation japonaise (anime, mangas) ;
 - plus de 350000 notes
 
 # Modèle de comparaison: 20-KNN
@@ -59,7 +59,7 @@ On abrégera par KNN le modèle des $k$-plus proches voisins dans le reste du do
 ## Choix du paramètre $k$, de la métrique et visualisation des voisins
 
 Le choix du paramètre $k$ peut s'effectuer par validation croisée sur le jeu de données.
-Cette validation croisée a été effectuement préalablement et fournit que $k = 20$ donne de bonnes performances relativement à la racine carrée de l'erreur quadratique moyenne (RMSE).
+Cette validation croisée a été effectuée préalablement et fournit que $k = 20$ donne de bonnes performances relativement à la racine carrée de l'erreur quadratique moyenne (RMSE).
 
 **Remarque 1** : En pratique, on peut apprendre $k$ par recherche d'hyper-paramètres durant l'entraînement du modèle, mais on ne le fera pas en raison d'un coût temporel trop élevé.
 
@@ -72,7 +72,7 @@ Ensuite, pour la métrique, on utilise la similarité cosinus qui possède empir
 où $\norm{\cdot}_2$ est la norme $\ell_2$.
 
 \begin{samepage}
-        On peut aussi procéder à une visualisation des graphes de voisins dans la figure \ref{knn_graph} et \ref{giant_sub_graph}.
+        On peut aussi procéder à une visualisation des graphes de voisins dans les figures \ref{knn_graph} et \ref{giant_sub_graph}.
 \begin{figure}[H]
         \centering
         \includegraphics[scale=0.5]{assets/knn_graph.png}
@@ -89,25 +89,25 @@ où $\norm{\cdot}_2$ est la norme $\ell_2$.
 ## Défauts et limites du modèle
 
 \footnotetext{Les étiquettes sont les identifiants d'utilisateurs}
-Comme définit en introduction, l'entraînement de 20-KNN dépend de la métrique $d$ employée. Si on note $\Supp(u)$ pour $u \in [[1, n]]$ le support des utilisateurs, défini par:
+Comme défini en introduction, l'entraînement de 20-KNN dépend de la métrique $d$ employée. Si on note $\Supp(u)$ pour $u \in [[1, n]]$ le support des utilisateurs, défini par:
 
 \begin{equation*}
         \Supp(u) = \{ j \in [[1, m]] \mid m_{u,j} \text{ est connu} \} 
 \end{equation*}
 
-Ainsi, pour $u, v$ deux utilisateurs tels que $\Supp(u) \cap \Supp(v) = \emptyset$, alors: $\Sim(u, v) = 0$ 
+Ainsi, pour $u, v$ deux utilisateurs tels que $\Supp(u) \cap \Supp(v) = \emptyset$, alors: $\Sim(u, v) = 0$ .
 
-Or, la situation dans laquelle l'utilisateur $u$ a lu les versions mangas\footnote{le format livre de l'œuvre} d'une œuvre et $v$ a vu les versions animes\footnote{l'adaptation animée de l'œuvre} de celle-ci peut se présenter, cependant la métrique n'en tient pas compte et ne peut le calculer puisqu'il s'agit d'une information propre à l'œuvre.
+Or, la situation dans laquelle l'utilisateur $u$ a lu les versions mangas\footnote{le format livre de l'œuvre} d'une œuvre et $v$ a vu les versions anime\footnote{l'adaptation animée de l'œuvre} de celle-ci peut se présenter, cependant la métrique n'en tient pas compte et ne peut le calculer puisqu'il s'agit d'une information propre à l'œuvre.
 
 ## Objectifs du TIPE
 
 Nous répondrons aux questions suivantes:
 
 - Sachant qu'on dispose de l'ensemble des couvertures des œuvres, peut-on calculer une métrique qui tient compte de l'information visuelle de ces couvertures et des similarités entre les distributions d'utilisateurs ?
-- En la remplaçant par la similarité cosinus, obtient-on un meilleure performance au sens d'une métrique d'erreur ?
+- En la remplaçant par la similarité cosinus, obtient-on une meilleure performance au sens d'une métrique d'erreur ?
 - Est-ce qu'on constate des transferts d'information\footnote{Cela se manifeste par l'existence d'une dépendance entre la variable aléatoire qui indique si un} pertinents et intéressants tels que: la saison $i$ d'une œuvre vers la saison $i + j$ de la même œuvre, du format manga vers le format anime ou vice versa ?
 
-Ces travaux sont motivés notamment par [@vie2017] et forme un prolongement possible de cet article.
+Ces travaux sont motivés notamment par [@vie2017] et forment un prolongement possible de cet article.
 
 ## État actuel de la recherche
 
@@ -118,9 +118,9 @@ On notera: [@chu2017hybrid], [@prompt] et
 - [@vie2017] où il s'agit d'un modèle qui combine un filtrage collaboratif et ensemble de régresseurs linéaires par utilisateur afin d'apprendre des préférences visuelles dans un cadre de démarrage à froid, ce travail permet l'interprétabilité des goûts d'un utilisateur en inspectant la matrice du régresseur linéaire, travaux qui ont inspiré celui-ci ;
 - [@messina2019] où il s'agit d'un modèle purement basé sur le contenu qui extrait automatiquement des représentations visuelles profondes et des métadonnées telles que le contraste afin de recommander des œuvres artistiques digitales-- « artworks ».
 
-# Raffinement par le transport optimal: impact de la distance de Wasserstein
+# Raffinement par le transport optimal : impact de la distance de Wasserstein
 
-Le transport optimal est un domaine qui est de plus en plus appliqué notamment grâce à [@cuturi2013] qui a permis le calcul effectif et approximatif des objets de façon tractable.
+Le transport optimal est un domaine qui est de plus en plus appliqué notamment grâce à [@cuturi2013] qui a permis le calcul effectif et approximatif des objets de façon traitable.
 
 Au préalable, notons $\Sigma_d = \{ x \in \R_{+}^d \mid \sum_{i=1}^d x_i = 1 \}$ le simplexe de dimension $d$, qui peut s'interpréter de façon probabiliste comme une distribution de probabilité discrète à valeurs dans $[[1, d]]$.
 
@@ -136,7 +136,7 @@ Ainsi, on définit la distance de Wasserstein comme étant:
 
 où $C$ est une matrice exprimant le coût de transporter de la masse de $r_i$ vers $c_j$ et $\dps{\cdot}{\cdot}_F$ est le produit scalaire de Frobenius.
 
-**Remarque** : On rencontre aussi le nom de « Earth's Mover Distance » ou EMD pour la distance de Wasserstein, cela peut s'expliquer par l'interprétation intuitive suivante: si les distributions $r, c$ sont des masses, au sens physique, renormalisés à 1, et que la matrice $C$ représente des distances euclidiennes physiques de transporter les masses de $r$ vers les masses de $c$, alors la distance de Wasserstein est le coût minimal de transport afin de transformer une masse en l'autre par déplacements successifs.
+**Remarque** : On rencontre aussi le nom de « Earth's Mover Distance » ou EMD pour la distance de Wasserstein, cela peut s'expliquer par l'interprétation intuitive suivante: si les distributions $r, c$ sont des masses, au sens physique, renormalisées à 1, et que la matrice $C$ représente des coûts par unité de masse de transporter les masses de $r$ vers les masses de $c$, alors la distance de Wasserstein est le coût minimal de transport afin de transformer une masse en l'autre par déplacements successifs.
 
 ## Autour de $\mathcal{W}$
 
@@ -152,7 +152,7 @@ On introduit $\varepsilon > 0$, un paramètre de régularisation entropique, qui
 - Rendre le plan de transport optimal le plus simple\footnote{lire: parcimonieux, avec le plus de zéros} possible en forçant son entropie à être faible
 
 \begin{equation*}
-        \mathcal{W}_{\varepsilon}(r, c) = \min_{\gamma \in U(r, c)} \dps{\gamma}{C}_F + \varepsilon \Omega(\gamma)
+        \mathcal{W}_{\varepsilon}(r, c) = \min_{\gamma \in U(r, c)} \dps{\gamma}{C}_F + \varepsilon \Omega(\gamma).
 \end{equation*}
 
 De plus, le minimum est atteint pour un $\gamma$ unique et la solution est de la forme:
@@ -187,7 +187,7 @@ Donc, la matrice de coût représente la similarité visuelle entre deux couvert
 \end{figure}
 \end{samepage}
 
-En vertu de cette propriété de coût minimal, la distance de Wasserstein propagera correctement l'information visuelle entre les deux couvertures, qui s'avère être l'information : « ces deux œuvres font partis du même univers et sont directement la suite ou l'antépisode l'un de l'autre ».
+En vertu de cette propriété de coût minimal, la distance de Wasserstein propagera correctement l'information visuelle entre les deux couvertures, qui s'avère être l'information : « ces deux œuvres font partie du même univers et sont directement la suite ou l'antépisode l'un de l'autre ».
 
 Le troisième objectif du TIPE **a été donc atteint**.
 
@@ -200,7 +200,7 @@ Le premier objectif du TIPE **a été atteint**.
 Dans le modèle à similarité cosinus, on fait voter les voisins afin de calculer une prédiction.
 En revanche, puisqu'on manipule des distributions de probabilités, on ne peut plus procéder à la détermination de la classe majoritaire.
 
-Au lieu de cela, on calcule le barycentre des distances de Wasserstein, pour un utilisateur $u$ donnée:
+Au lieu de cela, on calcule le barycentre des distances de Wasserstein, pour un utilisateur $u$ donné :
 
 \begin{equation*}
         v = \dfrac{1}{\card \mathcal{N}(u)} \argmin_{v \in \Sigma_m} \sum_{u' \in \mathcal{N}(u)} \mathcal{W}(v, u')
@@ -235,11 +235,11 @@ On appelle $\alpha$ seuil de discrimination.
 
 # Résultats
 
-Les code des expériences sont fournies sur le référentiel GitHub: <https://github.com/mangaki/hiyajo-ot> et reproducibles.
+Les code des expériences sont fournies sur le référentiel GitHub: <https://github.com/mangaki/hiyajo-ot> et reproductibles.
 
 Le matériel employé pour l'expérience est un serveur muni d'un Intel(R) Atom(TM) CPU C2750  @ 2.40GHz à 8 cœurs et 16 Gio de RAM.
 
-Plusieurs implémentations de référence seront réutilisés directement plutôt que de les réécrire car leur (ré)-implémentation ne concerne pas le fond de ce TIPE, on utilisera notamment NumPy, SciPy, NetworkX, IPyParallel et enfin POT [@flamary2017pot] qui fournit des implémentations de l'algorithme de Sinkhorn.
+Plusieurs implémentations de référence seront réutilisées directement plutôt que de les réécrire car leur (ré)-implémentation ne concerne pas le fond de ce TIPE, on utilisera notamment NumPy, SciPy, NetworkX, IPyParallel et enfin POT [@flamary2017pot] qui fournit des implémentations de l'algorithme de Sinkhorn.
 
 ## Évaluation de l'erreur de recommandation: courbe ROC
 
@@ -254,7 +254,7 @@ AUROC & Ensemble de test\\ \midrule
 KNN & 0.514 \\
 W-KNN & \textbf{0.625}\\ \bottomrule
 \end{tabular}
-\caption{$5$-fold où l'on s'assure que les classes sont balancés, répétés 3 fois avec un seed de $42$}
+\caption{$5$-fold où l'on s'assure que les classes sont équilibrées, répété 3 fois avec un seed de $42$}
 \end{figure}
 
 Le second objectif du TIPE **a été atteint**, on constate que W-KNN a une meilleure performance que KNN de façon stable et reproductible.
@@ -263,9 +263,9 @@ Le second objectif du TIPE **a été atteint**, on constate que W-KNN a une meil
 
 Après avoir atteint tous les objectifs fixés par le TIPE.
 Nous n'avons pas discuté des différences entre les temps d'entraînement et de prédiction de KNN et W-KNN.
-En l'état, W-KNN est 100 fois plus lent à entraîner que KNN malgré l'algorithme de Sinkhorn, cela s'explique que les expériences n'ont pas exploité le caractère hautement parallélisable de cet algorithme afin de faire diminuer les temps de calculs.
+En l'état, W-KNN est 100 fois plus lent à entraîner que KNN malgré l'algorithme de Sinkhorn, cela s'explique que les expériences n'ont pas exploité le caractère hautement parallélisable de cet algorithme afin de faire diminuer les temps de calcul.
 
-Cependant, une alternative est envisageable par [@altschuler2017near], un algorithme quasi-linéaire de calcul des distances approximatifs de Wasserstein est possible, et mis en place sous le nom de **Greenkhorn** dans la librairie POT, cependant il est très sensible aux erreurs numériques et n'est pas conçu pour la parallélisation automatique. Durant les essais préliminaires, aucune renormalisation n'a été fructueux.
+Cependant, une alternative est envisageable par [@altschuler2017near], un algorithme quasi linéaire de calcul des distances approximatifs de Wasserstein est possible, et mis en place sous le nom de **Greenkhorn** dans la librairie POT, cependant il est très sensible aux erreurs numériques et n'est pas conçu pour la parallélisation automatique. Durant les essais préliminaires, aucune renormalisation n'a été fructueuse.
 
 De plus, l'algorithme de Sinkhorn possède une version stabilisée qui fonctionne selon le principe décrit dans [@schmitzer2019stabilized] mais Greenkhorn n'en possède aucune, il serait intéressant de contribuer à POT afin d'ajouter le support pour un tel schéma de calcul numérique et de résoudre le problème décrit ici: <https://github.com/rflamary/POT/issues/54> par la même occasion.
 
