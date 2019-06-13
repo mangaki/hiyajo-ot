@@ -60,15 +60,24 @@ On abrégera KNN pour le modèle des $k$-plus proches voisins dans le reste du d
 
 Le choix du paramètre $k$ peut s'effectuer par validation croisée sur le jeu de données, cette validation croisée a été effectuement préalablement et fournit que $k = 20$ donne une bonne performance relativement à la racine carrée de l'erreur moyenne au carrée (RMSE).
 
+**Remarque 1** : En pratique, on peut apprendre $k$ par recherche d'hyper-paramètres durant l'entraînement du modèle, mais ceci ne serait pas fait en raison du coût en complexité.
+
 Ensuite, pour la métrique, on utilise la similarité cosinus qui possède de bonnes performances empiriquement sur les tâches de recommandation d'après [@sarwar2001item], dont on rappelle la définition:
 
 \begin{equation*}
-        sim(u, u') = \dfrac{r_u^{\intercal} r_{u'}}{\norm{r_u}_2 \norm{r_{u'}}_2}
+        \Sim(u, u') = \dfrac{r_u^{\intercal} r_{u'}}{\norm{r_u}_2 \norm{r_{u'}}_2}
 \end{equation*}
 
 où $\norm{\cdot}_2$ est la norme $\ell_2$.
 
+\begin{samepage}
 On peut aussi procéder à une visualisation des graphes de voisins:
+\begin{figure}[!ht]
+        \centering
+        \includegraphics[scale=0.5]{assets/knn_graph.png}
+        \caption{20 plus proches voisins d'un utilisateur avec plus de 200 notes sur le jeu de données Mangaki}
+\end{figure}
+\end{samepage}
 
 ## Défauts et limites du modèle
 
@@ -78,7 +87,7 @@ En introduction, l'entraînement de 20-KNN dépend de la métrique $d$ employée
         \Supp(u) = \{ j \in [[1, m]] \mid m_{u,j} \text{ est connu} \} 
 \end{equation*}
 
-Alors, pour $u, v$ deux utilisateurs tels que $\Supp(u) \cap \Supp(v) = \emptyset$, alors: $sim(u, v) = 0$ 
+Alors, pour $u, v$ deux utilisateurs tels que $\Supp(u) \cap \Supp(v) = \emptyset$, alors: $\Sim(u, v) = 0$ 
 
 Or, la situation dans laquelle l'utilisateur $u$ a lu les versions mangas d'une œuvre et $v$ a vu les versions animes de celle-ci peut se présenter, cependant la métrique n'en tient pas compte et ne peut le calculer puisqu'il s'agit d'une information propre à l'œuvre.
 
@@ -100,7 +109,9 @@ Ces travaux sont motivés notamment par [@vie2017] et forme un prolongement poss
 
 Le transport optimal est un domaine qui est de plus en plus appliqué notamment grâce à [@cuturi2013] qui a permis le calcul effectif et approximatif des objets de façon tractable.
 
-Si l'on dispose de $r \in \R^d, c \in \R^d$ deux distributions de probabilités discrètes, en posant $U(r, c) = \{ M \in \M_{d, d}(\R_{+}) \mid M \mathbbm{1}_d = r \text{ et } M^{\intercal} \mathbbm{1}_d = c \}$, l'ensemble des probabilités jointes sur $r$ et $c$, on définit la distance de Wasserstein comme étant:
+Au préalable, notons $\Sigma_d = \{ x \in \R_{+}^d \mid \sum_{i=1}^d x_i = 1 \}$ le simplexe de dimension $d$, qui peut s'interpréter de façon probabiliste comme une distribution de probabilité discrète à valeurs dans $[[1, d]]$.
+
+Si l'on dispose de $r, c \in \Sigma_d$ deux distributions de probabilités discrètes, en posant $U(r, c) = \{ M \in \M_{d, d}(\R_{+}) \mid M \mathbbm{1}_d = r \text{ et } M^{\intercal} \mathbbm{1}_d = c \}$, l'ensemble des probabilités jointes sur $r$ et $c$ à valeurs dans $[[1, d]]^2$, on définit la distance de Wasserstein comme étant:
 
 \begin{equation*}
         \mathcal{W}(r, c) = \min_{\gamma \in U(r, c)} \dps{\gamma}{C}_F
@@ -110,17 +121,18 @@ où $C$ est une matrice exprimant le coût de transporter de la masse de $r_i$ v
 
 ## Propriétés de $\mathcal{W}$
 
-La distance de Wasserstein est une métrique.
+– $\mathcal{W}$ est bien une distance sur les distributions de probabilités (discrètes), démontrée dans [@villani2008] ;
+— 
 
 ## Intérêt: calcul efficace et rapide $\mathcal{W}$, propagation de l'information visuelle dans le modèle
 
-Par l'algorithme de Sinkhorn, présenté en détails dans [@cuturi2013], il est possible de calculer une approximation de $\mathcal{W}$, pour $\varepsilon > 0$, un paramètre de régularisation entropique :
+Par l'algorithme de Sinkhorn-Knopp, présenté initialement dans [@sinkhorn1967diagonal], présenté en détails dans [@cuturi2013], il est possible de calculer une approximation de $\mathcal{W}$, pour $\varepsilon > 0$, un paramètre de régularisation entropique :
 
 \begin{equation*}
         \mathcal{W}_{\varepsilon}(r, c) = \min_{\gamma \in U(r, c)} \dps{\gamma}{C}_F + \varepsilon \Omega(\gamma)
 \end{equation*}
 
-On prouve aussi dans [@cuturi2013] que $(r, c) \mapsto \mathbbm{1}_{r \neq c} \mathcal{W}_{\varepsilon}(r, c)$ est une distance.
+On prouve aussi dans [@cuturi2013] que $(r, c) \mapsto \mathbbm{1}_{r \neq c} \mathcal{W}_{\varepsilon}(r, c)$ est une distance par la même approche employée dans [@villani2008].
 
 ## Calcul des représentations visuelles par le réseau de neurones convolutifs Illustration2Vec
 
@@ -130,15 +142,76 @@ En utilisant les travaux de [@saito2015] et [@vie2017], on peut calculer des rep
         C = \left(\norm{p_i - p_j}_2^2\right)_{(i, j) \in [[1, m]]^2}
 \end{equation*}
 
-Donc, la matrice de coût représente la similarité visuelle entre deux couvertures.
+\begin{samepage}
+Donc, la matrice de coût représente la similarité visuelle entre deux couvertures, que l'on illustre entre les deux saisons de l'anime \textbf{Code Geass: Lelouch of the Rebellion} :
+
+\begin{figure}[!ht]
+        \centering
+        \includegraphics[scale=0.5]{assets/cg_similarity.png}
+        \caption{Distance entre les deux couvertures où le coût de déplacement est minimal sur toutes les œuvres du jeu de données}
+\end{figure}
+\end{samepage}
+
+On appellera donc désormais 20-WKNN le modèle 20-KNN dans lequel on remplace la similarité cosinus par une approximation de la distance de Wasserstein $\mathcal{W}$ avec la matrice $C$ définie comme précédemment.
+
+Ceci **remplit** le premier objectif du TIPE.
+
+## Calcul des prédictions de 20-WKNN
+
+Dans le modèle à similarité cosinus, on fait voter les voisins afin de calculer une prédiction, en revanche, puisqu'on manipule des distributions de probabilités, on ne peut plus procéder à la détermination de la classe majoritaire, au lieu de cela, on calcule, pour un utilisateur $u$ donnée:
+
+\begin{equation*}
+        v = \argmin_{v \in \Sigma_m} \sum_{u' \in \mathcal{N}(u)} \mathcal{W}(v, u')
+\end{equation*}
+
+Ainsi, on connaît la famille de probabilités:
+
+\begin{equation*}
+        \left(\PR(m_{u,j} = 1)\right)_{j \in [[1, m]]} = (v_j)_{j \in [[1, m]]}
+\end{equation*}
+
+À partir de cela, on peut opter pour une méthode à base de seuil, on fixe un paramètre $\alpha \in [0, 1]$ et on pose:
+
+\begin{equation*}
+        \widehat{m_{u,j}} = \left\{
+                \begin{aligned}
+                        & 1 \text{ si } \PR(m_{u,j} = 1) \geq \alpha \\
+                        & 0 \text{ sinon.}
+                \end{aligned}
+                \right.
+\end{equation*}
+
+On appelle $\alpha$ seuil de prédiction.
+
+**Remarque 1** : Ce paramètre peut être appris par recherche d'hyper-paramètres pendant l'entraînement du modèle.
+
+**Remarque 2** : Il peut être rendu dépendant de l'utilisateur.
+
+**Remarque 3** : Si les $\alpha$ sont dépendants des utilisateurs, on peut calculer un $\overline{\alpha}$ moyen que l'on peut employer pour une prédiction sur un nouvel utilisateur qui n'était pas présent dans la phase d'entraînement.
 
 # Résultats
 
+Les code des expériences sont fournies sur le référentiel GitHub: <https://github.com/mangaki/hiyajo-ot> et reproducibles.
+
+Le matériel employé pour l'expérience est un serveur muni d'un Intel(R) Atom(TM) CPU C2750  @ 2.40GHz à 8 cœurs et 16 Gio de RAM.
+
+Plusieurs implémentations de référence seront réutilisés directement plutôt que de les réécrire car leur (ré)-implémentation ne concerne pas le fond de ce TIPE, on utilisera notamment NumPy, SciPy, NetworkX, IPyParallel et enfin POT [@flamary2017pot] qui fournit des implémentations de l'algorithme de Sinkhorn.
+
 ## AUC
 
-## Temps de calcul
+\begin{figure}[!ht]
+\centering
+\begin{tabular}{cccc} \toprule
+AUC & Ensemble de test\\ \midrule
+KNN & 0.514 \\
+W-KNN & \textbf{0.625}\\ \bottomrule
+\end{tabular}
+\caption{$5$-fold où l'on s'assure que les classes sont balancés, répétés 3 fois avec un seed de $42$}
+\end{figure}
 
 ## Analyse qualitative
+
+
 
 # Prolongements envisagables
 
