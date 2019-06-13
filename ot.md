@@ -270,4 +270,6 @@ Cependant, une alternative est envisageable par [@altschuler2017near], un algori
 
 De plus, l'algorithme de Sinkhorn possède une version stabilisée qui fonctionne selon le principe décrit dans [@schmitzer2019stabilized] mais Greenkhorn n'en possède aucune, il serait intéressant de contribuer à POT afin d'ajouter le support pour un tel schéma de calcul numérique et de résoudre le problème décrit ici: <https://github.com/rflamary/POT/issues/54> par la même occasion.
 
+Ces travaux feront l'objet d'une publication scientifique plus tard.
+
 # Réferences bibliographiques
