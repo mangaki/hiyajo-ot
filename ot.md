@@ -88,7 +88,7 @@ où $\norm{\cdot}_2$ est la norme $\ell_2$.
 
 ## Défauts et limites du modèle
 
-\footnotetext{Les étiquettes sont les identifiants d'utilisateurs}
+\footnotetext{Les étiquettes sont les identifiants d'utilisateurs.}
 Comme défini en introduction, l'entraînement de 20-KNN dépend de la métrique $d$ employée. Si on note $\Supp(u)$ pour $u \in [[1, n]]$ le support des utilisateurs, défini par:
 
 \begin{equation*}
@@ -97,7 +97,7 @@ Comme défini en introduction, l'entraînement de 20-KNN dépend de la métrique
 
 Ainsi, pour $u, v$ deux utilisateurs tels que $\Supp(u) \cap \Supp(v) = \emptyset$, alors: $\Sim(u, v) = 0$ .
 
-Or, la situation dans laquelle l'utilisateur $u$ a lu les versions mangas\footnote{le format livre de l'œuvre} d'une œuvre et $v$ a vu les versions anime\footnote{l'adaptation animée de l'œuvre} de celle-ci peut se présenter, cependant la métrique n'en tient pas compte et ne peut le calculer puisqu'il s'agit d'une information propre à l'œuvre.
+Or, la situation dans laquelle l'utilisateur $u$ a lu les versions mangas\footnote{Le format livre de l'œuvre.} d'une œuvre et $v$ a vu les versions anime\footnote{L'adaptation animée de l'œuvre.} de celle-ci peut se présenter, cependant la métrique n'en tient pas compte et ne peut le calculer puisqu'il s'agit d'une information propre à l'œuvre.
 
 ## Objectifs du TIPE
 
@@ -105,7 +105,7 @@ Nous répondrons aux questions suivantes:
 
 - Sachant qu'on dispose de l'ensemble des couvertures des œuvres, peut-on calculer une métrique qui tient compte de l'information visuelle de ces couvertures et des similarités entre les distributions d'utilisateurs ?
 - En la remplaçant par la similarité cosinus, obtient-on une meilleure performance au sens d'une métrique d'erreur ?
-- Est-ce qu'on constate des transferts d'information\footnote{Cela se manifeste par l'existence d'une dépendance entre la variable aléatoire qui indique si un} pertinents et intéressants tels que: la saison $i$ d'une œuvre vers la saison $i + j$ de la même œuvre, du format manga vers le format anime ou vice versa ?
+- Est-ce qu'on constate des transferts d'information pertinents et intéressants tels que: la saison $i$ d'une œuvre vers la saison $i + j$ de la même œuvre, du format manga vers le format anime ou vice versa ?
 
 Ces travaux sont motivés notamment par [@vie2017] et forment un prolongement possible de cet article.
 
@@ -149,7 +149,7 @@ En revanche, son temps de calcul est prohibitif, en effet, il est en $O(d^3 \log
 On introduit $\varepsilon > 0$, un paramètre de régularisation entropique, qui se justifie pour deux raisons:
 
 - Rendre le calcul plus rapide ;
-- Rendre le plan de transport optimal le plus simple\footnote{lire: parcimonieux, avec le plus de zéros} possible en forçant son entropie à être faible
+- Rendre le plan de transport optimal le plus simple\footnote{Lire: parcimonieux, avec le plus de zéros.} possible en forçant son entropie à être faible
 
 \begin{equation*}
         \mathcal{W}_{\varepsilon}(r, c) = \min_{\gamma \in U(r, c)} \dps{\gamma}{C}_F + \varepsilon \Omega(\gamma).
@@ -157,7 +157,7 @@ On introduit $\varepsilon > 0$, un paramètre de régularisation entropique, qui
 
 où $\Omega(A) = \sum\limits_{i, j} A_{ij} \log A_{ij}$ pour $A \in \M_d(\R_{+}^{*})$, qui représente une forme d'entropie.
 
-De plus, le minimum est atteint pour un $\gamma$ unique et la solution est de la forme:
+De plus, le minimum est atteint pour un $\gamma$ unique [@peyre2019computational] et la solution est de la forme:
 
 \begin{equation*}
         \forall (i, j) \in [[1, d]]^2, \gamma_{i,j} = u_i \exp(-C/\varepsilon) v_j
@@ -263,8 +263,7 @@ Le second objectif du TIPE **a été atteint**, on constate que W-KNN a une meil
 
 # Prolongements envisagables
 
-Après avoir atteint tous les objectifs fixés par le TIPE.
-Nous n'avons pas discuté des différences entre les temps d'entraînement et de prédiction de KNN et W-KNN.
+Après avoir atteint tous les objectifs fixés par le TIPE, nous n'avons pas discuté des différences entre les temps d'entraînement et de prédiction de KNN et W-KNN.
 En l'état, W-KNN est 100 fois plus lent à entraîner que KNN malgré l'algorithme de Sinkhorn, cela s'explique que les expériences n'ont pas exploité le caractère hautement parallélisable de cet algorithme afin de faire diminuer les temps de calcul.
 
 Cependant, une alternative est envisageable par [@altschuler2017near], un algorithme quasi linéaire de calcul des distances approximatifs de Wasserstein est possible, et mis en place sous le nom de **Greenkhorn** dans la librairie POT, cependant il est très sensible aux erreurs numériques et n'est pas conçu pour la parallélisation automatique. Durant les essais préliminaires, aucune renormalisation n'a été fructueuse.
