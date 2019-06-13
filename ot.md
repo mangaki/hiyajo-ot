@@ -105,7 +105,7 @@ Nous répondrons aux questions suivantes:
 
 - Sachant qu'on dispose de l'ensemble des couvertures des œuvres, peut-on calculer une métrique qui tient compte de l'information visuelle de ces couvertures et des similarités entre les distributions d'utilisateurs ?
 - En la remplaçant par la similarité cosinus, obtient-on un meilleure performance au sens d'une métrique d'erreur ?
-- Est-ce qu'on constate des transferts d'information\footnote{Au sens intuitif du terme} pertinents et intéressants tels que: la saison $i$ d'une œuvre vers la saison $i + j$ de la même œuvre, du format manga vers le format anime ou vice versa ?
+- Est-ce qu'on constate des transferts d'information\footnote{Cela se manifeste par l'existence d'une dépendance entre la variable aléatoire qui indique si un} pertinents et intéressants tels que: la saison $i$ d'une œuvre vers la saison $i + j$ de la même œuvre, du format manga vers le format anime ou vice versa ?
 
 Ces travaux sont motivés notamment par [@vie2017] et forme un prolongement possible de cet article.
 
@@ -146,8 +146,6 @@ En revanche, son temps de calcul est prohibitif, en effet, il est en $O(d^3 \log
 
 ## Intérêt: calcul efficace et rapide $\mathcal{W}$, propagation de l'information visuelle dans le modèle
 
-Par l'algorithme de Sinkhorn-Knopp, présenté initialement dans [@sinkhorn1967diagonal], réutilisé de façon fondamentale dans [@cuturi2013], il est possible de calculer une approximation de $\mathcal{W}$ en temps quadratique en la dimension $d$.
-
 On introduit $\varepsilon > 0$, un paramètre de régularisation entropique, qui se justifie pour deux raisons:
 
 - Rendre le calcul plus rapide ;
@@ -156,6 +154,16 @@ On introduit $\varepsilon > 0$, un paramètre de régularisation entropique, qui
 \begin{equation*}
         \mathcal{W}_{\varepsilon}(r, c) = \min_{\gamma \in U(r, c)} \dps{\gamma}{C}_F + \varepsilon \Omega(\gamma)
 \end{equation*}
+
+De plus, le minimum est atteint pour un $\gamma$ unique et la solution est de la forme:
+
+\begin{equation*}
+        \forall (i, j) \in [[1, d]]^2, \gamma_{i,j} = u_i \exp(-C/\varepsilon) v_j
+\end{equation*}
+
+Pour $(\avec{u}, \avec{v}) \in (\R^d)^2$ des facteurs de dilations qu'on calcule itérativement.
+
+C'est l'algorithme de Sinkhorn-Knopp, présenté initialement dans [@sinkhorn1967diagonal], réutilisé de façon fondamentale dans [@cuturi2013]. Il permet donc de calculer une approximation de $\mathcal{W}$ en temps quadratique en la dimension $d$.
 
 On prouve aussi dans [@cuturi2013] que $(r, c) \mapsto \mathbbm{1}_{r \neq c} \mathcal{W}_{\varepsilon}(r, c)$ est une distance par la même approche employée dans [@villani2008].
 
@@ -179,9 +187,9 @@ Donc, la matrice de coût représente la similarité visuelle entre deux couvert
 \end{figure}
 \end{samepage}
 
-Le troisième objectif du TIPE **a été atteint**.
-
 En vertu de cette propriété de coût minimal, la distance de Wasserstein propagera correctement l'information visuelle entre les deux couvertures, qui s'avère être l'information : « ces deux œuvres font partis du même univers et sont directement la suite ou l'antépisode l'un de l'autre ».
+
+Le troisième objectif du TIPE **a été donc atteint**.
 
 On appellera donc désormais 20-W-KNN le modèle 20-KNN dans lequel on remplace la similarité cosinus par une approximation de la distance de Wasserstein $\mathcal{W}$ avec la matrice $C$ définie comme précédemment.
 
@@ -200,7 +208,7 @@ Au lieu de cela, on calcule le barycentre des distances de Wasserstein, pour un 
 
 **Remarque 1** : Ce calcul peut être encore effectué rapidement par l'algorithme de Sinkhorn-Knopp, d'après [@cuturi2014fast].
 
-Ainsi, on connaît la famille de probabilités:
+Ainsi, on connaît le germe de probabilité:
 
 \begin{equation*}
         \left(\PR(m_{u,j} = 1)\right)_{j \in [[1, m]]} = (v_j)_{j \in [[1, m]]}
@@ -235,7 +243,9 @@ Plusieurs implémentations de référence seront réutilisés directement plutô
 
 ## Évaluation de l'erreur de recommandation: courbe ROC
 
-Une courbe ROC est un graphique exprimant le taux de vrai positifs (TPR) par rapport au taux de faux positifs (FPR), l'on calcule l'ensemble des seuils de discriminations possibles et on trace une courbe ROC montrant ces seuils et on peut calculer l'aire sous la courbe, ce résultat est indépendant des seuils de discrimination, ce qui rend le choix de cet outil intéressant puisque 20-WKNN dépend d'un seuil de discrimination pour effectuer des prédictions. Ce résultat est pris comme l'erreur de recommandation que l'on note en tant que « AUROC » pour « Area Under Receiving Operating Characteristics ».
+Une courbe ROC est un graphique exprimant le taux de vrai positifs (TPR) par rapport au taux de faux positifs (FPR).
+On calcule l'ensemble des seuils de discriminations possibles et on trace une courbe ROC montrant ces seuils et on peut calculer l'aire sous la courbe, ce résultat est indépendant des seuils de discrimination.
+Ce qui rend le choix de cet outil intéressant puisque 20-WKNN dépend d'un seuil de discrimination pour effectuer des prédictions. Ce résultat est pris comme l'erreur de recommandation que l'on note en tant que « AUROC » pour « Area Under Receiving Operating Characteristics ».
 
 \begin{figure}[!ht]
 \centering
@@ -258,7 +268,5 @@ En l'état, W-KNN est 100 fois plus lent à entraîner que KNN malgré l'algorit
 Cependant, une alternative est envisageable par [@altschuler2017near], un algorithme quasi-linéaire de calcul des distances approximatifs de Wasserstein est possible, et mis en place sous le nom de **Greenkhorn** dans la librairie POT, cependant il est très sensible aux erreurs numériques et n'est pas conçu pour la parallélisation automatique. Durant les essais préliminaires, aucune renormalisation n'a été fructueux.
 
 De plus, l'algorithme de Sinkhorn possède une version stabilisée qui fonctionne selon le principe décrit dans [@schmitzer2019stabilized] mais Greenkhorn n'en possède aucune, il serait intéressant de contribuer à POT afin d'ajouter le support pour un tel schéma de calcul numérique et de résoudre le problème décrit ici: <https://github.com/rflamary/POT/issues/54> par la même occasion.
-
-Enfin, une meilleure étude des matrices de confusion, des voisins de W-KNN en opposition à ceux de KNN permettraient de mieux comprendre les erreurs de W-KNN serait pertinent, ceci conjoint à une véritable recherche d'hyper-paramètre pour le terme de régularisation entropique et le seuil de discrimination rendrait le système de recommandation plus fiable.
 
 # Réferences bibliographiques
