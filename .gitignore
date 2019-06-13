@@ -108,3 +108,7 @@ data/embeddings-*
 posters/
 pandoc.out
 _minted-input/
+data/ratings.csv
+rapport.pdf
+pdg_scanned.pdf
+pdg.pdf

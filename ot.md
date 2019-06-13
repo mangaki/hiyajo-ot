@@ -237,7 +237,7 @@ On appelle $\alpha$ seuil de discrimination.
 
 # Résultats
 
-Les code des expériences sont fournies sur le référentiel GitHub: <https://github.com/mangaki/hiyajo-ot> et reproductibles.
+Les codes des expériences sont fournies sur le référentiel GitHub: <https://github.com/mangaki/hiyajo-ot> et reproductibles.
 
 Le matériel employé pour l'expérience est un serveur muni d'un Intel(R) Atom(TM) CPU C2750  @ 2.40GHz à 8 cœurs et 16 Gio de RAM.
 
