@@ -122,7 +122,7 @@ On notera: [@chu2017hybrid], [@prompt] et
 
 Le transport optimal est un domaine qui est de plus en plus appliqué notamment grâce à [@cuturi2013] qui a permis le calcul effectif et approximatif des objets de façon tractable.
 
-Au préalable, notons $\Sigma_d = \{ x \in \R_{+}^d \mid \sum_{i=1}^d x_i = 1 \}$ le simplexe de dimension $d$, qui peut s'interpréter de façon probabiliste comme une distribution de probabilité discrète à valeurs dans $[[1, d]]$.
+Au préalable, notons $\Sigma_d = \{ x \in \R_{+}^d \mid \sum\limits_{i=1}^d x_i = 1 \}$ le simplexe de dimension $d$, qui peut s'interpréter de façon probabiliste comme une distribution de probabilité discrète à valeurs dans $[[1, d]]$.
 
 Si l'on dispose de $r, c \in \Sigma_d$ deux distributions de probabilités discrètes.
 
@@ -134,7 +134,7 @@ Ainsi, on définit la distance de Wasserstein comme étant:
         \mathcal{W}(r, c) = \min_{\gamma \in U(r, c)} \dps{\gamma}{C}_F
 \end{equation*}
 
-où $C$ est une matrice exprimant le coût de transporter de la masse de $r_i$ vers $c_j$ et $\dps{\cdot}{\cdot}_F$ est le produit scalaire de Frobenius.
+où $C$ est une matrice exprimant le coût de transporter de la masse de $r_i$ vers $c_j$ et $\dps{\cdot}{\cdot}_F$ est le produit scalaire de Frobenius défini par $\dps{A}{B}_F = \tr(A^{\intercal} B)$ où $A, B \in \M_p(\R), p \in \N$.
 
 **Remarque** : On rencontre aussi le nom de « Earth's Mover Distance » ou EMD pour la distance de Wasserstein, cela peut s'expliquer par l'interprétation intuitive suivante: si les distributions $r, c$ sont des masses, au sens physique, renormalisés à 1, et que la matrice $C$ représente des distances euclidiennes physiques de transporter les masses de $r$ vers les masses de $c$, alors la distance de Wasserstein est le coût minimal de transport afin de transformer une masse en l'autre par déplacements successifs.
 
@@ -154,6 +154,8 @@ On introduit $\varepsilon > 0$, un paramètre de régularisation entropique, qui
 \begin{equation*}
         \mathcal{W}_{\varepsilon}(r, c) = \min_{\gamma \in U(r, c)} \dps{\gamma}{C}_F + \varepsilon \Omega(\gamma)
 \end{equation*}
+
+où $\Omega(A) = \sum\limits_{i, j} A_{ij} \log A_{ij}$ pour $A \in \M_d(\R_{+}^{*})$, qui représente une forme d'entropie.
 
 De plus, le minimum est atteint pour un $\gamma$ unique et la solution est de la forme:
 
