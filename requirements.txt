@@ -7,3 +7,5 @@ jupyter
 tqdm
 cython
 networkx
+git+https://github.com/mangaki/zero
+ipyparallel
