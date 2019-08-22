@@ -1,4 +1,6 @@
-from .item_encoder import ItemEncoder
+import os
+import numpy as np
+from item_encoder import ItemEncoder
 
 class Embedding:
     def __init__(self, npy_filename, posters_paths=None):
