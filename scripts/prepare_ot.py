@@ -5,15 +5,12 @@ import numpy as np
 from zero import MangakiKNN
 from zero.chrono import Chrono
 from datetime import datetime
-from functools import wraps
 import pickle
 import logging
 import os
 
 from embeddings import generate_mapping
-
-# Main chrono
-chrono = Chrono(False)
+from utils import chrono, instrument
 
 # Logger
 logger = logging.getLogger()
@@ -21,16 +18,6 @@ logger = logging.getLogger()
 # Constants
 RATING_VALUES = {'favorite': 1, 'like': 1, 'dislike': 0, 'neutral': 0,
                  'willsee': 0, 'wontsee': 0}
-
-def instrument(f):
-    @wraps(f)
-    def inner(*args, **kwargs):
-        local_chrono = Chrono(chrono.is_enabled)
-        ret = f(*args, **kwargs)
-        local_chrono.save(f.__name__)
-        return ret
-    return inner
-
 
 @instrument
 def warn_for_sequential_ids_mismatches(embeddings):
@@ -146,9 +133,11 @@ def main():
     parser.add_argument('data_path', type=str, help='Path to the data directory (ratings, embeddings)')
     parser.add_argument('--chrono', action='store_true', help='Enable the chronometer')
     parser.add_argument('--sanity-check', action='store_true', help='Run the sanity check (assertions, it is *SLOWER*)')
+    # TODO: add work threshold also.
     parser.add_argument('--user-threshold', type=int, default=100, help='Limit the amount of users loaded from ratings')
     parser.add_argument('--method', type=str, default='divide', help='Method to use to compute the user distribution from KNN matrix')
     parser.add_argument('--epsilon', type=float, default=1e-2, help='Epsilon to perturb an user distribution (lower makes the result more exact)')
+    # TODO: default to stdout, disable Python buffering
     parser.add_argument('--output', default='ot.npy', help='Output file consisting of (knn.M original matrix, cost matrix, user distributions matrix, item encoder)')
     parser.add_argument('-v', '--verbose', dest='verbose_count', action='count',
             default=0, help='Increases the log verbosity for each occurrence')
@@ -170,6 +159,7 @@ def main():
     X, y, nb_users, nb_works = filter_ratings(args.data_path, args.user_threshold)
     C, encoder, X, y, nb_users, nb_works = create_cost_matrix(X, y, embeddings, args.sanity_check)
     chrono.save('Data loaded in memory')
+    # FIXME: add more KNN parameters as flags
     knn = MangakiKNN()
     knn.set_parameters(nb_users, nb_works)
     knn.train(X, y)
