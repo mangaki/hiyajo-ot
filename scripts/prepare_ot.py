@@ -16,7 +16,7 @@ from embeddings import generate_mapping
 chrono = Chrono(False)
 
 # Logger
-logger = logging.getLogger('main')
+logger = logging.getLogger()
 
 # Constants
 RATING_VALUES = {'favorite': 1, 'like': 1, 'dislike': 0, 'neutral': 0,
@@ -154,12 +154,18 @@ def main():
             default=0, help='Increases the log verbosity for each occurrence')
 
     args = parser.parse_args()
+
+    effectiveLevel = max(3 - max(args.verbose_count, int(args.chrono)), 0) * 10
+    logger.setLevel(effectiveLevel)
+
+    logging.info('Logging initialized at level: {}'.format(effectiveLevel))
+
     chrono.is_enabled = args.chrono
     chrono.save('Argument parsing')
+
     if os.path.isfile(args.output) and not os.access(args.output, os.W_OK):
         raise ValueError('Output file cannot be accessed in write mode, aborting the preparation')
 
-    logger.setLevel(max(3 - args.verbose_count, 0) * 10)
     embeddings = open_embeddings(args.data_path)
     X, y, nb_users, nb_works = filter_ratings(args.data_path, args.user_threshold)
     C, encoder, X, y, nb_users, nb_works = create_cost_matrix(X, y, embeddings, args.sanity_check)
