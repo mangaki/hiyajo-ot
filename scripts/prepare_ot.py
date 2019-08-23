@@ -180,6 +180,10 @@ def main():
     chrono.save('KNN trained')
     user_distributions = compute_user_distributions(nb_users, knn.M, args.method, args.epsilon)
     chrono.save('User distributions computed')
+    if args.sanity_check:
+        logger.info('knn.M[{}]: {}'.format(knn.M.shape, knn.M))
+        logger.info('C[{}]: {}'.format(C.shape, C))
+        logger.info('User distributions[{}]: {}'.format(user_distributions.shape, user_distributions))
     try:
         # write (knn.M, C, user_distributions, encoder) into output
         with open(args.output, 'wb') as f:
