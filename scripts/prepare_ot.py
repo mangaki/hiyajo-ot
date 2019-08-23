@@ -201,7 +201,7 @@ def compute_user_distributions(nb_users, items_matrix, method="divide", epsilon=
 
 def main():
     parser = argparse.ArgumentParser(
-        prog="prepare_ot", description="Prepare data for Optimal Transport computations"
+        prog="prepare_ot", description="Prepare data for Optimal Transport computations through `gpu_sinkhorn`"
     )
     # Mandatory
     parser.add_argument(
