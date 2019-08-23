@@ -10,6 +10,7 @@ import logging
 import os
 import pandas as pd
 
+from item_encoder import ItemEncoder
 from embeddings import generate_mapping, merge_and_order_embeddings
 from utils import chrono, instrument
 
@@ -175,6 +176,81 @@ def create_cost_matrix(X, y, embeddings, sanity_check: bool = False):
 
 
 @instrument
+def refilter_based_on_works(
+    C,
+    encoder,
+    X,
+    y,
+    nb_users,
+    nb_works,
+    embeddings,
+    work_threshold,
+    sanity_check: bool = False,
+):
+    if work_threshold == 0 or nb_works <= work_threshold:
+        return C, encoder, X, y, nb_users, nb_works
+
+    # FIXME: is it really good to sample this way? won't this introduce too much randomness?
+    sampled_works = np.random.choice(np.arange(nb_works), work_threshold)
+    logger.info("Sampled works: {}".format(sampled_works))
+
+    subC = C[sampled_works]
+
+    if sanity_check:
+        assert subC.shape[0] == sampled_works.shape[0]
+
+    # Let's do the re-encoding
+    reduce_encoder = ItemEncoder({v: k for k, v in enumerate(sampled_works)})
+    final_encoder = encoder.merge(reduce_encoder, sampled_works)
+
+    logger.debug(reduce_encoder.encoder)
+
+    # Some remarks about re-encoding/encoding/etc.
+    # For readers: encoder sends Mangaki Rating Work IDs to sequential IDs of the cost matrix
+    # reduce_encoder sends sequentials IDs of the cost matrix to the "reduced" sequentials IDs of the reduced cost matrix, let's call those "reduced" IDs
+    # final_encoder sends Mangaki Rating IDs to "reduced" IDs as a surjective mapping
+
+    # Basically, everything can be assumed as surjective (so that their *REVERSE* encoder, i.e. DECODER is injective).
+    # Bijectivity can only happens when the amount of works in the ratings is the same as in the cost matrix.
+    # Why is it so important? This enables us to inspect easily the resulting models for debugging by reading the pickled encoder and decoding the IDs we want to poke in our DB and ensure that there are some sense in what we're doing.
+
+    if sanity_check:
+        initial = sampled_works[0]
+        logger.debug("Trying to reduce-encode {} ID".format(initial))
+        # Let's do a test.
+        k = reduce_encoder.encode(initial)  # This is a "reduced" ID
+        logger.debug("Got: {} -- reduced ID".format(k))
+        # If what we said earlier is true, this should be true, right?
+        assert (C[initial] == subC[k]).all()
+        # Better.
+        assert (subC[0] == C[reduce_encoder.decode(k)]).all()
+
+    # Let's re-encode the X vector.
+    index, mask = compute_mask_based_on(sampled_works, X[:, 1], X.shape[0])
+    X, y = X[mask], y[mask]
+
+    logger.debug("Re-encoded vectors: {}, {}".format(X, y))
+
+    if X.size == 0 or y.size == 0:
+        raise ValueError(
+            "Dataset too small, re-encoding made the dataset vanish! Solution: Increase size or threshold."
+        )
+
+    # Now, hotpatch it because it's already encoded, so we only want to "reduce-encode" it.
+    X[:, 1] = np.asarray(list(map(reduce_encoder.encode, X[:, 1])))
+
+    # Now, final encoder is fully ready to handle X/y index access rewrites, otherwise we would have to keep the reduce encoder, we want to throw encoder & reduce_encoder.
+
+    nb_works = X[:, 1].max() + 1
+    if sanity_check:
+        assert nb_works <= work_threshold
+
+    subC = subC[:nb_works]
+
+    return subC, final_encoder, X, y, nb_users, nb_works
+
+
+@instrument
 def compute_user_distribution(user_id, items_matrix, method="divide", epsilon=1e-2):
     A = items_matrix[user_id].todense() + epsilon
 
@@ -201,7 +277,8 @@ def compute_user_distributions(nb_users, items_matrix, method="divide", epsilon=
 
 def main():
     parser = argparse.ArgumentParser(
-        prog="prepare_ot", description="Prepare data for Optimal Transport computations through `gpu_sinkhorn`"
+        prog="prepare_ot",
+        description="Prepare data for Optimal Transport computations through `gpu_sinkhorn`",
     )
     # Mandatory
     parser.add_argument(
@@ -234,7 +311,12 @@ def main():
         help="Load a JSON rating values file, see an example in README.md (default to binary values)",
     )
     # Threshold controllers
-    # TODO: add work threshold also.
+    parser.add_argument(
+        "--work-threshold",
+        type=int,
+        default=100,
+        help="Limit the amount of works loaded from ratings (default: 100, use 0 for +∞)",
+    )
     parser.add_argument(
         "--user-threshold",
         type=int,
@@ -295,6 +377,17 @@ def main():
     X, y, nb_users, nb_works = filter_ratings(args.data_path, args.user_threshold)
     C, encoder, X, y, nb_users, nb_works = create_cost_matrix(
         X, y, embeddings, args.sanity_check
+    )
+    C, encoder, X, y, nb_users, nb_works = refilter_based_on_works(
+        C,
+        encoder,
+        X,
+        y,
+        nb_users,
+        nb_works,
+        embeddings,
+        args.work_threshold,
+        args.sanity_check,
     )
     chrono.save("Data loaded in memory")
     knn = MangakiKNN(
