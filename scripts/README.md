@@ -43,3 +43,13 @@ Use verbosity at max and enable chronometer, enable sanity checks.
 ### GPU Sinkhorn
 
 Run it using CPU fallback with `--use-cpu`.
+
+## TODO
+
+### What to do with Wasserstein pairwise distances once you have them
+
+If you have a pair `(i, j)` which is the distance: `W(work_i, work_j)`, a common question: what is `work_i` and `work_j` ?
+
+Add a `what_the_fuck_is <input_ot_data> *i` where it shows the ID of the original work, so you can do `feh data/posters/$(what_the_fuck_is ot.npy 128 324)` to show posters for example, replace `feh` by your favorite image viewer.
+
+Bonus, if you have a `title.csv`, it should be possible to do `what_is_the_title <input_ot_data> <title.csv> *i` for instance.
