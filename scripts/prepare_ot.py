@@ -21,6 +21,22 @@ RATING_VALUES = {'favorite': 1, 'like': 1, 'dislike': 0, 'neutral': 0,
                  'willsee': 0, 'wontsee': 0}
 
 @instrument
+def load_rating_values_file(path):
+    mandatory_fields = {'favorite', 'like', 'dislike', 'neutral', 'willsee', 'wontsee'}
+    try:
+        with open(path, 'r') as f:
+            local_rating_values = json.loads(f.read())
+            for field in mandatory_fields:
+                if field not in local_rating_values:
+                    raise ValueError('Incorrect local rating values file, missing field: {} !'.format(field))
+            
+            RATING_VALUES = local_rating_values
+    except Exception as e:
+        logger.exception(e)
+        logger.info('Continuing with binary values: {}'.format(RATING_VALUES))
+
+
+@instrument
 def warn_for_sequential_ids_mismatches(embeddings):
     # Check for potential mismatches
     A = set(sorted(list(chain(*[embedding.work_ids for embedding in embeddings]))))
@@ -70,10 +86,12 @@ def open_embeddings(data_path: str):
 @instrument
 def filter_ratings(ratings_path: str, user_threshold: int = 100):
     _, X, y, nb_users, nb_works = load_ratings(ratings_path)
-
-    user_filter = X[:,0] <= user_threshold
-    X, y = X[user_filter], y[user_filter]
-    nb_users = X[:,0].max() + 1
+    
+    # user_threshold = 0 ⇒ no threshold.
+    if user_threshold > 0:
+        user_filter = X[:,0] <= user_threshold
+        X, y = X[user_filter], y[user_filter]
+        nb_users = X[:,0].max() + 1
 
     return X, y, nb_users, nb_works
 
@@ -144,18 +162,28 @@ def compute_user_distributions(nb_users, items_matrix, method='divide', epsilon=
 
 def main():
     parser = argparse.ArgumentParser(prog='prepare_ot', description='Prepare data for Optimal Transport computations')
+    # Mandatory
     parser.add_argument('data_path', type=str, help='Path to the data directory (ratings, embeddings)')
+    parser.add_argument('--output', default='ot.npy', help='Output file consisting of (knn.M original matrix, cost matrix, user distributions matrix, item encoder), default: ot.npy')
+    # Utilities
     parser.add_argument('--chrono', action='store_true', help='Enable the chronometer')
     parser.add_argument('--sanity-check', action='store_true', help='Run the sanity check (assertions, it is *SLOWER*)')
-    # TODO: add work threshold also.
-    parser.add_argument('--user-threshold', type=int, default=100, help='Limit the amount of users loaded from ratings')
-    parser.add_argument('--method', type=str, default='divide', help='Method to use to compute the user distribution from KNN matrix')
-    parser.add_argument('--epsilon', type=float, default=1e-2, help='Epsilon to perturb an user distribution (lower makes the result more exact)')
-    # TODO: default to stdout, disable Python buffering
-    parser.add_argument('--output', default='ot.npy', help='Output file consisting of (knn.M original matrix, cost matrix, user distributions matrix, item encoder)')
     parser.add_argument('-v', '--verbose', dest='verbose_count', action='count',
             default=0, help='Increases the log verbosity for each occurrence')
+    # Rating values
+    parser.add_argument('-lrf', '--load-rating-values-file', help='Load a JSON rating values file, see an example in README.md (default to binary values)')
+    # Threshold controllers
+    # TODO: add work threshold also.
+    parser.add_argument('--user-threshold', type=int, default=100, help='Limit the amount of users loaded from ratings (default: 100, use 0 for +∞)')
+    # User distribution scheme computation
+    parser.add_argument('--method', type=str, default='divide', help='Method to use to compute the user distribution from KNN matrix (default: divide by sum)')
+    parser.add_argument('--epsilon', type=float, default=1e-2, help='Epsilon to perturb an user distribution (lower makes the result more exact, default: 1e-2)')
+    # KNN parameters
+    parser.add_argument('--knn-neighbors', type=int, default=20, help='Number of neighbors for MangakiKNN instance (default: 20)')
+    parser.add_argument('--knn-rated-by-neighbors-at-least', type=int, default=3, help='Rated by neighbors at least parameter for MangakiKNN instance (default: 3)')
+    parser.add_argument('--knn-weighted-neighbors', action='store_true', help='Enable weighted neighbors for MangakiKNN instance')
 
+    
     args = parser.parse_args()
 
     effectiveLevel = max(3 - max(args.verbose_count, int(args.chrono)), 0) * 10
@@ -163,8 +191,12 @@ def main():
 
     logging.info('Logging initialized at level: {}'.format(effectiveLevel))
 
+
     chrono.is_enabled = args.chrono
     chrono.save('Argument parsing')
+
+    if args.load_rating_values_file:
+        load_rating_values_file(args.load_rating_values_file)
 
     if os.path.isfile(args.output) and not os.access(args.output, os.W_OK):
         raise ValueError('Output file cannot be accessed in write mode, aborting the preparation')
@@ -173,8 +205,9 @@ def main():
     X, y, nb_users, nb_works = filter_ratings(args.data_path, args.user_threshold)
     C, encoder, X, y, nb_users, nb_works = create_cost_matrix(X, y, embeddings, args.sanity_check)
     chrono.save('Data loaded in memory')
-    # FIXME: add more KNN parameters as flags
-    knn = MangakiKNN()
+    knn = MangakiKNN(nb_neighbors=args.knn_neighbors,
+            rated_by_neighbors_at_least=args.knn_rated_by_neighbors_at_least,
+            weighted_neighbors=args.knn_weighted_neighbors)
     knn.set_parameters(nb_users, nb_works)
     knn.fit(X, y)
     chrono.save('KNN trained')

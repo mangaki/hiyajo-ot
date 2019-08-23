@@ -100,7 +100,6 @@ def compute_squareform(cost_matrix, metric, use_cpu: bool = False):
 def main():
     parser = argparse.ArgumentParser(prog='gpu_sinkhorn', description='Run Sinkhorn on GPU over prepared OT data')
     parser.add_argument('input_ot_workload', help='The input NumPy arrays pickled file in the format specified in README.md')
-    # TODO: Default to stdout, disable Python buffering
     parser.add_argument('output_wasserstein_matrix', help='The output NumPy matrix which are the pairwise Wasserstein distances')
     parser.add_argument('--chrono', action='store_true', help='Enable the chronometer')
     parser.add_argument('--use-cpu', action='store_true', help='Disable GPU usage (useful for debugging as this is GPU/CPU agnostic)')
