@@ -18,13 +18,15 @@ NumPy, SciPy, for the GPU version: CuPy and a CUDA core (GPU/GPGPU whatever).
 
 ## Prepare OT script
 
-Prepare OT script expects a directory where you have the `embeddings-*` file and the `ratings.csv` file at the same time, it'll then write an `ot.npy` file by default containing: `knn.M` matrix, cost matrix (nb_works × 512 in general), user distributions matrix (nb_users × nb_works), an encoder from ratings work IDs to matrices indexes (useful if you want to know what index is what anime in the rating CSV if you have titles, that is debugging).
+Prepare OT script expects a directory where you have the `embeddings-*` and `paths-*` files and the `ratings.csv` file at the same time, it'll then write an `ot.npy` file by default containing: `knn.M` matrix, cost matrix (nb_works × 512 in general), user distributions matrix (nb_users × nb_works), an encoder from ratings work IDs to matrices indexes (useful if you want to know what index is what anime in the rating CSV if you have titles, that is debugging).
 
 You can use threshold to control the size of the output dataset (`--user-threshold` and `--work-threshold`), it'll automatically re-encode if necessary the IDs and output a correct dataset, the encoder being given, you can inspect back your final results using the encoder.
 
 You can also use a local rating values using the `--load-rating-values-file` or `-lrf` flag and giving it a JSON file of the form: `{"favorite": <float>, "like:" <float>, "dislike": <float>, "neutral": <float>, "willsee": <float>, "wontsee": <float>}` --- all these keys must be present, otherwise it will fallback to a binary rating values mapping.
 
 This file is a pickle dump of a tuple of `np.array`.
+
+**WARNING** : It is expected for `paths-*` file to contain a path which ends in the **WORK ID** of the currently processed work.
 
 ## GPU Sinkhorn
 
