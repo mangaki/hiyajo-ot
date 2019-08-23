@@ -8,8 +8,9 @@ from datetime import datetime
 import pickle
 import logging
 import os
+import pandas as pd
 
-from embeddings import generate_mapping
+from embeddings import generate_mapping, merge_and_order_embeddings
 from utils import chrono, instrument
 
 # Logger
@@ -27,11 +28,23 @@ def warn_for_sequential_ids_mismatches(embeddings):
     
     n_samples = len(A ^ B)
     if n_samples > 0:
-        logger.warn('There are at least {} missing embeddings, the results might be wrong.'.format(n_samples))
+        logger.warning('There are at least {} missing embeddings, the results might be wrong.'.format(n_samples))
+
+@instrument
+def warn_for_size_mismatches(embeddings):
+    for embedding in embeddings:
+        n_samples, _ = embedding.npy.shape
+        n_ids = len(embedding.work_ids)
+
+        if n_samples != n_ids:
+            logger.warning('There are {} samples in {} and {} work IDs fetched from the path file'.format(
+                n_samples,
+                embedding.npy_filename,
+                n_ids))
 
 @instrument
 def load_ratings(path):
-    df = pd.read_csv(path)
+    df = pd.read_csv(os.path.join(path, 'ratings.csv'))
     triplets = np.array(df[['user', 'item', 'rating']], dtype=np.object)
     vectorized_convert = np.vectorize(RATING_VALUES.get, otypes=[np.float64])
     X = triplets[:,0:2].astype(np.int32)
@@ -43,14 +56,15 @@ def load_ratings(path):
 
 @instrument
 def open_embeddings(data_path: str):
-    # FIXME: second argument is work ids images
-    embeddings, _ = generate_mapping(data_path)
-    for embedding in embeddings:
-        embedding.open_npy()
-    else:
+    embeddings = generate_mapping(data_path, False)
+    if not embeddings:
         raise ValueError('No embeddings, no computations')
 
+    for embedding in embeddings:
+        embedding.open_npy()
+
     warn_for_sequential_ids_mismatches(embeddings)
+    warn_for_size_mismatches(embeddings)
     return embeddings
 
 @instrument
@@ -73,7 +87,7 @@ def compute_mask_based_on(base_work_ids, target_work_ids, n_samples):
 @instrument
 def filter_ratings_based_on_cost_matrix_encoder(X, y, encoder, sanity_check: bool = False):
     work_ids = list(encoder.encoder.keys())
-    index, mask = compute_filter_mask(work_ids, X[:, 1], X.shape[0])
+    index, mask = compute_mask_based_on(work_ids, X[:, 1], X.shape[0])
 
     if sanity_check:
         u = set(work_ids)
@@ -162,14 +176,19 @@ def main():
     # FIXME: add more KNN parameters as flags
     knn = MangakiKNN()
     knn.set_parameters(nb_users, nb_works)
-    knn.train(X, y)
+    knn.fit(X, y)
     chrono.save('KNN trained')
     user_distributions = compute_user_distributions(nb_users, knn.M, args.method, args.epsilon)
     chrono.save('User distributions computed')
     try:
         # write (knn.M, C, user_distributions, encoder) into output
-        with open(args.output, 'w') as f:
-            pickle.dump((knn.M, C, user_distributions, encoder), f)
+        with open(args.output, 'wb') as f:
+            raw_repr = pickle.dumps((knn.M,
+                C,
+                user_distributions,
+                encoder), pickle.HIGHEST_PROTOCOL)
+
+            f.write(raw_repr)
         chrono.save('Wrote final data on disk')
     except Exception as e:
         logger.exception(e)
