@@ -104,4 +104,4 @@ def merge_and_order_embeddings(embeddings):
     work_id_encoder = {y: x for x, (_, y) in enumerate(ordered_embeddings)}
     encoder = ItemEncoder(work_id_encoder)
 
-    return C.astype(np.int16), encoder
+    return C.astype(np.float64), encoder
