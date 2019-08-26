@@ -5,6 +5,7 @@ import argparse
 import ot.gpu
 import ot
 import numpy as np
+import cupy
 from utils import instrument, chrono
 import os
 from scipy.spatial.distance import pdist, squareform
@@ -54,6 +55,7 @@ def compute_all_wasserstein_from(
             )
         else:
             sinkhorn = ot.gpu.sinkhorn if not use_cpu else ot.sinkhorn
+            extra_args = {'to_numpy': True} if not use_cpu else {'method': 'sinkhorn_stabilized'}
             return sinkhorn(
                 src,
                 user_distributions.T,
@@ -61,7 +63,7 @@ def compute_all_wasserstein_from(
                 sinkhorn_reg,
                 numItermax=max_iterations,
                 verbose=verbose,
-                to_numpy=True,
+                **extra_args
             )
     except Exception as e:
         logger.exception(e)
@@ -113,6 +115,22 @@ def compute_squareform(cost_matrix, metric, use_cpu: bool = False):
     else:
         return ot.gpu.dist(cost_matrix, metric=metric, to_numpy=False)
 
+def cost_normalization(M, norm=None):
+    xp = cupy.get_array_module(M)
+
+    if norm == 'median':
+        M /= float(xp.median(M))
+    elif norm == 'max':
+        M /= float(xp.max(M))
+    elif norm == 'log':
+        M = xp.log(1 + M)
+    elif norm == 'loglog':
+        M = xp.log(1 + xp.log(1 + M))
+    else:
+        raise NotImplementedError
+
+    return M
+
 
 def main():
     parser = argparse.ArgumentParser(
@@ -155,6 +173,11 @@ def main():
         default=0,
         help="Increases the log verbosity for each occurrence",
     )
+    parser.add_argument(
+            "-cm",
+            "--cost-normalization-method",
+            default="max",
+            help="Cost normalization method (median, max, log, loglog), default to max")
     parser.add_argument(
         "-r",
         "--sinkhorn-regularization",
@@ -211,6 +234,9 @@ def main():
     )
     M = compute_squareform(C, args.metric, args.use_cpu)
     chrono.save("Pairwise matrix of distances ({}) computed".format(M.shape))
+    logger.info('Non-normalized M[{}]: {}'.format(M.shape, M))
+    M = cost_normalization(M, args.cost_normalization_method)
+    logger.info('Normalized M[{}]: {}'.format(M.shape, M))
 
     ws_matrix = compute_all_wasserstein(
         user_distributions,
