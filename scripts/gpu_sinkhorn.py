@@ -128,7 +128,7 @@ def compute_squareform(cost_matrix, metric, use_cpu: bool = False):
         return ot.gpu.dist(cost_matrix, metric=metric, to_numpy=False)
 
 def cost_normalization(M, norm=None):
-    xp = cupy.get_array_module(M)
+    xp = get_array_module(M)
 
     if norm == 'median':
         M /= float(xp.median(M))
