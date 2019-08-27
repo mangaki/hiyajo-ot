@@ -2,14 +2,15 @@
 
 import pickle
 import argparse
+import ot
+
 try:
     import ot.gpu
 except ImportError:
     print('[!] ot.gpu not importable, GPU acceleration will not be available.')
     ot.gpu = None
-import ot
-import numpy as np
 
+import numpy as np
 try:
     import cupy
     get_array_module = cupy.get_array_module
