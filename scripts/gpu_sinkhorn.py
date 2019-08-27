@@ -2,10 +2,22 @@
 
 import pickle
 import argparse
-import ot.gpu
+try:
+    import ot.gpu
+except ImportError:
+    print('[!] ot.gpu not importable, GPU acceleration will not be available.')
+    ot.gpu = None
 import ot
 import numpy as np
-import cupy
+
+try:
+    import cupy
+    get_array_module = cupy.get_array_module
+except ImportError:
+    print('[!] CuPy not available, GPU acceleration will not be available.')
+    # Enforce NumPy
+    get_array_module = lambda X: np
+
 from utils import instrument, chrono
 import os
 from scipy.spatial.distance import pdist, squareform
