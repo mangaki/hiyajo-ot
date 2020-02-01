@@ -73,7 +73,7 @@ def start_measures(metric_name, filename):
         f.write('\nMETRIC {}\n'.format(metric_name)) # TODO: add date
 
 def measure(metric_name, y_pred, y_test):
-    return metrics[metric_name](y_test, y_pred)
+    return METRICS[metric_name](y_test, y_pred)
 
 def main():
     parser = argparse.ArgumentParser(
@@ -98,6 +98,9 @@ def main():
     parser.add_argument("--metric",
             default='rmse',
             help="Metric name used for comparison, example: rmse")
+    parser.add_argument("--auto-resize-cost-matrix",
+            action='store_true',
+            help='When nb_works > C.shape[0], C can be extended with zeros. Makes operations very slower.')
     parser.add_argument(
         "-v",
         "--verbose",
@@ -129,8 +132,15 @@ def main():
 
     chrono.save("OT data and dataset loaded in memory")
 
-    if not C.shape[0] == nb_users:
-        logging.warning("Cost matrix shape: {}, X shape: {} ; errors will most likely happen.".format(C.shape, X.shape))
+    if not C.shape[0] == nb_works and not args.auto_resize_cost_matrix:
+        logger.warning("Cost matrix shape: {}, number of works in X: {}, X shape: {} ; errors will most likely happen.".format(C.shape, nb_works, X.shape))
+
+    if args.auto_resize_cost_matrix:
+        p_nb_works, embeddings_size = C.shape
+        rC = np.zeros((nb_works, embeddings_size), dtype=np.uint8)
+        rC[:p_nb_works,:embeddings_size] = C
+        C = rC
+        logger.info('Cost matrix resized: {}'.format(C.shape))
 
     if args.save_results_to_file:
         start_measures(args.metric, args.save_results_to_file)
@@ -152,7 +162,7 @@ def main():
         y_pred = etienne_knn.predict(X_test)
         chrono.save("Etienne's KNN predicted")
         res = measure(args.metric, y_pred, y_test)
-        logging.info('K-Fold [{}/{}]: metric={}'.format(i + 1, args.n_splits, res))
+        logger.info('K-Fold [{}/{}]: metric={}'.format(i + 1, args.n_splits, res))
         chrono.save("Etienne's KNN measured")
         if args.save_results_to_file:
             append_measure(res, args.save_results_to_file)
