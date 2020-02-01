@@ -78,10 +78,12 @@ def warn_for_size_mismatches(embeddings):
 
 
 @instrument
-def load_ratings(path):
+def load_ratings(path, rvalues=None):
+    if rvalues is None:
+        rvalues = RATING_VALUES
     df = pd.read_csv(os.path.join(path, "ratings.csv"))
     triplets = np.array(df[["user", "item", "rating"]], dtype=np.object)
-    vectorized_convert = np.vectorize(RATING_VALUES.get, otypes=[np.float64])
+    vectorized_convert = np.vectorize(rvalues.get, otypes=[np.float64])
     X = triplets[:, 0:2].astype(np.int32)
     y = vectorized_convert(triplets[:, 2])
     nb_users = int(max(triplets[:, 0]) + 1)
