@@ -11,7 +11,7 @@ from kernel_knn import KernelKNN, normalize
 
 from utils import chrono, instrument
 from sklearn.metrics import mean_squared_error
-from sklearn.model_selection import KFold
+from sklearn.model_selection import StratifiedKFold
 
 # Constants
 KNN_RATING_VALUES = {
@@ -19,7 +19,7 @@ KNN_RATING_VALUES = {
     "like": 1,
     "dislike": 0,
     "neutral": 0,
-    "willsee": 0,
+    "willsee": 1,
     "wontsee": 0,
 }
 
@@ -75,6 +75,22 @@ def start_measures(metric_name, filename):
 def measure(metric_name, y_pred, y_test):
     return METRICS[metric_name](y_test, y_pred)
 
+def diag_imbalanced_info(y):
+    labels = np.unique(y)
+    counts = np.bincount(y.astype(np.int64))
+    logger.info('Diagnostic of dataset imbalanced state')
+    m, M = counts[0], counts[0]
+
+    for label, count in zip(labels, counts):
+        logger.info('{} label has {} element in the vector'.format(label, count))
+        m = min(count, m)
+        M = max(count, M)
+
+    logger.info('[!] In summary, biggest deviation is: {}, corresponding to {} % of the maximum'.format(
+        M - m,
+        100 - 100*m/M
+    ))
+
 def main():
     parser = argparse.ArgumentParser(
             prog="etienne_knn",
@@ -98,9 +114,15 @@ def main():
     parser.add_argument("--metric",
             default='rmse',
             help="Metric name used for comparison, example: rmse")
+    parser.add_argument("--shuffle-dataset",
+            action='store_true',
+            help='Shuffle the dataset through the folds and display the seed used')
     parser.add_argument("--auto-resize-cost-matrix",
             action='store_true',
             help='When nb_works > C.shape[0], C can be extended with zeros. Makes operations very slower.')
+    parser.add_argument("--diagnose-balance-in-dataset",
+            action='store_true',
+            help='Show information about the balance in the dataset in terms of labels during folds and at start')
     parser.add_argument(
         "-v",
         "--verbose",
@@ -129,6 +151,9 @@ def main():
 
     C, _ = load_ot_data_in_memory(args.input_ot_workload, True)
     _, X, y, nb_users, nb_works = load_ratings(args.initial_dataset, KNN_RATING_VALUES)
+    
+    if args.diagnose_balance_in_dataset:
+        diag_imbalanced_info(y)
 
     chrono.save("OT data and dataset loaded in memory")
 
@@ -149,15 +174,26 @@ def main():
     etienne_kernel = create_kernel_function(C)
     chrono.save("Etienne's kernel built")
 
-    kf = KFold(n_splits=args.n_splits)
+    if args.shuffle_dataset:
+        r_state = np.random.randint(2**32)
+        kf = StratifiedKFold(n_splits=args.n_splits, shuffle=True, random_state=r_state)
+        logger.warning('Shuffling will create uncertainty in results, but here\'s the seed for the KFold: {}'.format(r_state))
+    else:
+        kf = StratifiedKFold(n_splits=args.n_splits)
 
-    for i, (train_index, test_index) in enumerate(kf.split(X)):
+    for i, (train_index, test_index) in enumerate(kf.split(X, y)):
         X_train, X_test = X[train_index], X[test_index]
         y_train, y_test = y[train_index], y[test_index]
 
         etienne_knn = KernelKNN(nb_users, nb_works, kernel_function=etienne_kernel)
         etienne_knn.fit(X_train, y_train)
         chrono.save("Etienne's KNN fitted")
+       
+        if args.diagnose_balance_in_dataset:
+            logging.info('Imbalanced information on y_train')
+            diag_imbalanced_info(y_train)
+            logging.info('Imbalanced information on y_test')
+            diag_imbalanced_info(y_test)
 
         y_pred = etienne_knn.predict(X_test)
         chrono.save("Etienne's KNN predicted")
