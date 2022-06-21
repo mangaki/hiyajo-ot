@@ -9,7 +9,7 @@ fastrlock==0.4
 kiwisolver==1.1.0
 git+https://github.com/mangaki/zero
 matplotlib==3.1.1
-numpy==1.14.5
+numpy==1.22.0
 pandas==0.25.1
 POT==0.5.1
 pyparsing==2.4.2
